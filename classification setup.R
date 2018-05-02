@@ -67,8 +67,6 @@ ramones_LH <- read_csv("ramones LH.csv")
 ramones_rocket <- read_csv("ramones rocket.csv")
 ramones_road <- read_csv("ramones road.csv")
 
-
-
 behemoth_demigod <- read_csv("behemoth demigod.csv")
 behemoth_apostasy <- read_csv("behemoth apostasy.csv")
 behemoth_satanist <- read_csv("behemoth satanist.csv")
@@ -179,7 +177,18 @@ final_train_input <- final_train_input[c(random_order), ]
 punk <- punk[c(random_order)]
 songs_artists <- songs_artists[c(random_order), ]
 
+# Separating out a test set
+test_split = 0.2
+test_index <- round ((1-test_split) * total_songs)
 
+test_input <- final_train_input[(test_index+1):total_songs, ]
+final_train_input <- final_train_input[1:test_index, ]
+
+test_punk <- punk[(test_index+1):total_songs]
+punk <- punk[1:test_index]
+
+
+songs_test <- songs_artists[(test_index+1):total_songs, ]
 
 # Random labels for testing purposes
 # set.seed(100)
@@ -202,20 +211,20 @@ model %>% compile(
 
 history <- model %>% fit(
   final_train_input, punk,
-  epochs = 5,
+  epochs = 8,
   batch_size = 20,
   validation_split = 0.2
 )
 
 summary(model)
 
-model %>% evaluate(final_train_input, punk)
+model %>% evaluate(test_input, test_punk)
 
-y_train_hat <- model %>% predict_classes(final_train_input)
-table(punk, y_train_hat)
+y_train_hat <- model %>% predict_classes(test_input)
+table(test_punk, y_train_hat)
 
-song_names <- songs_artists %>% select(title, Song_Artist)
-song_names$pred <- y_train_hat
-song_names$true <- punk
+songs_test <- songs_test %>% select(title, Song_Artist)
+songs_test$pred <- y_train_hat
+songs_test$true <- test_punk
 
-misclass <- song_names %>% filter(pred != true)
+misclass <- songs_test %>% filter(pred != true)
